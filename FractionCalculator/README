@@ -1,0 +1,22 @@
+Simple Fraction calculator which parses input and can deal with the four basic mathematical operations ( + , - , * , / ).
+
+The Grammar:
+  Equate:
+    Term
+    Equate+Term
+    Equate-Term
+  Term:
+    Fraction
+    Term*Fraction
+    Term/Fraction
+  Fraction:
+    [ADT] Fraction (int)
+    [ADT] Fraction (int, int)
+    
+The Fraction ADT has the basic neccessary operaters overloaded, the Implementation will simplify the fraction by dividing both the numerator
+and denominator by the GCD (Greatest Common Divisor) as ascertained by the Euclidian algorithm.
+
+Constructors can deal with 0-2 integers, with 0 int arguments resulting in a Fraciton of value 0,
+1 int arguments resulting in a Fraction where the int is the numerator and 1 is the denominator 
+and 2 int arguments resulting in a Fraction where the first is the numerator and second, the denominator.
+    
