@@ -1,0 +1,522 @@
+scenario
+{
+//This script requires the last player to be a PC to run.
+//REMEMBER number 8 is not tied to colour orange, but 8th player as it stands orange is 4..
+
+//BETTER TO TEST WHAT FUNCTIONS DO IN GAME RATHER THAN ASSUMING THE MANUAL IS UP TO DATE
+//THERE IS A RENAME TYPE IN FUNCTIONS 
+
+labels {
+  //Add any constant labels here in a comma separated list.
+}
+
+static int x;
+static int y;
+
+static int horde = num_human_players()+1;
+static string horde_name;
+static string horde_taunt;
+static int main_player = 1;
+
+static int player_start_x;
+static int player_start_y;
+
+static float wave_strength; //equal to base amount (10 units or so) + score_add * time_add. Wave is purchased from a for loop, Receive gold after waves, in proportion to units killed. Wave_counter? Death Toll?
+
+static int wave_counter = 0 ;
+
+static int base_rate = 100; //Resource collection at the beggining
+static int lower_bound = 0;//rand_int lower bound wave composition.
+
+
+
+static int city_id;
+
+run_once {
+  //Insert commands that should be executed only once when the script is loaded here.
+  //ui_hide_score();
+  force_transport_ability( horde );
+  disable_city_defeat( horde );
+  set_population_cap( horde , 5000 );
+  disable_all_triggers();
+  disable_take_attrition( horde );
+  
+  //disable_type( "Missile Silo" );
+  disable_type( "Airbase" );
+  disable_type( "Factory" );
+  disable_type( "Missile Cruiser" );
+  //disable_type( "Attack Submarine" );
+  disable_type( "Advanced Battleship" );
+  disable_type( "Aircraft Carrier" );
+  disable_type( "Fisherman" );
+  
+  set_game_msg_color( "pink" ); 
+  disable_type( "Small City" );  
+      
+  enable_trigger ("next_wave");
+  enable_trigger ("cities_place");
+  
+  rand_seed(rand_get_seed());
+  
+  //enable_trigger ("next_bomb");
+  
+  
+}
+
+trigger cities_place(){ //Remember you can pass arguments to triggers.
+//ONLY GENERATING ONE CITY AT THE MOMENT.
+
+for ( player = 1 ; player < 2 /*should be horde not 2 for multiplayer */; ++ player ) {
+
+city_x = get_map_size()/4 + rand_int ( 0 , get_map_size()/2 );
+city_y = get_map_size()/4 + rand_int ( 0 , get_map_size()/2 );
+
+
+create_building_near( player , city_x , city_y , "Major City" , get_map_size()/8 );
+}
+enable_trigger ( "buildings_place" )
+}
+
+
+trigger buildings_place(){
+
+for ( cur_player = 1 /*should be horde - 1 not 1 for multiplayer */ ; cur_player >= main_player ; -- cur_player )
+{
+city_id=0;
+
+if ( find_build(cur_player,"Small City") > city_id)
+city_id = find_build(cur_player,"Small City");
+
+if ( find_build(cur_player,"Large City") > city_id)
+city_id = find_build(cur_player,"Large City");
+
+if ( find_build(cur_player,"Major City") > city_id)
+city_id = find_build(cur_player,"Major City");
+
+if (city_id<1)
+set_feedback_msg("PLAYERS MUST START GAME WITH CITIES FOR THIS SCRIPT TO WORK");
+
+
+	player_start_y=object_position_y( cur_player ,city_id);
+	player_start_x=object_position_x( cur_player ,city_id);
+
+	farm_number=0;
+	
+	while (farm_number<10){
+
+		building=rand_int(0,15);
+
+		switch (building) {
+		case 0:
+		case 1:
+		case 2:
+case 6:
+			create_building_near( cur_player ,player_start_x,player_start_y, "House" , 50 );
+			break;
+		case 3:
+			create_building_near( cur_player ,player_start_x,player_start_y, "Apartments" , 50 );
+			break;
+		case 4:
+			create_building_near( cur_player ,player_start_x,player_start_y, "Office Building" ,50 );
+			break;
+		case 5:
+			create_building_near( cur_player ,player_start_x,player_start_y, "Courtyard Fountain" ,50 );
+			break;
+		default:
+			create_building_near( cur_player ,player_start_x,player_start_y, "Farm" , 50 );
+			++farm_number;
+			break;
+		}
+}
+create_building_near( cur_player ,player_start_x,player_start_y, "Castle",50);
+//create_building_near(1,player_start_x,player_start_y, "Woodcutter's Camp",50);
+create_building_near(1,player_start_x,player_start_y, "Air Defense Gun",50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Keep" ,50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Granary" ,50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Smelter" ,50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Lumber Mill" ,50);
+create_building_near( cur_player ,player_start_x,player_start_y, "University" ,50);
+
+create_building_near( cur_player ,player_start_x,player_start_y, "Library" , 50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Barracks" , 50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Market" , 50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Temple" , 50);
+create_building_near( cur_player ,player_start_x,player_start_y, "Senate" , 50);
+
+set_population_cap( cur_player, 50 );
+
+set_base_rate( cur_player , "Food" , base_rate );
+set_base_rate( cur_player , "Timber" , base_rate );
+set_base_rate( cur_player , "Wealth" , base_rate );
+set_base_rate( cur_player , "Metal" , base_rate );
+set_base_rate( cur_player , "Oil" , base_rate );
+set_base_rate( cur_player , "Knowledge" , base_rate );
+
+com_cap = 1000;
+
+set_bonus_cap( cur_player , "Food" , com_cap );
+set_bonus_cap( cur_player , "Timber" , com_cap );
+set_bonus_cap( cur_player , "Wealth" , com_cap );
+set_bonus_cap( cur_player , "Metal" , com_cap );
+set_bonus_cap( cur_player , "Oil" , com_cap );
+set_bonus_cap( cur_player , "Knowledge" , com_cap );
+
+create_unit( cur_player , player_start_x + 10 , player_start_y + 10 , "Marine Riflemen" , 3);
+create_unit( cur_player , player_start_x - 10 , player_start_y - 10 , "Citizen" , 10);
+
+
+}
+}
+/*
+//Special forces bombing mechanism:
+trigger next_bomb(){
+set_timer("bomb city", 30);
+
+enable_trigger("bomb_city");
+}
+
+trigger bomb_city(timer_expired("bomb city")){
+set_feedback_msg("BOMBER");
+c1=create_unit(globalists,200,200,"Commando",5);
+//print_game_msg(c1+" --- That commandos ID!!!!");
+c_pop=num_type(globalists,"Commando");
+for (int i=0; i<c_pop; ++i){
+	special_forces_sabotage(globalists, find_all_unit(globalists,"Commando"),main_player,city_id);
+}
+//special_forces_sabotage(globalists, c1,main_player,city_id);
+enable_trigger("next_bomb");
+}
+*/
+
+
+trigger next_wave(){
+	set_timer("wave", 15 );//Could make this timer random again.
+	enable_trigger( "horde_wave" );
+	}
+
+
+trigger horde_wave(timer_expired("wave")){
+
+total_score=0;
+++wave_counter;
+
+for ( cur_player = horde - 1 ; cur_player >= main_player ; --cur_player){
+total_score+=score(cur_player );
+give_good( cur_player , "Wealth" , wave_counter*100 );
+}
+
+score_add = (total_score/( horde - 1 ))/1000;
+
+base_strength = rand_int ( 0 , score_add ) ;
+
+wave_strength = 3 * (base_strength + wave_counter) ;
+
+
+print_msg( "#" + wave_counter );
+set_game_msg_color( "pink" );
+print_game_msg("Total number of enemy killed: " + num_units_lost( horde ) + ". ");
+
+set_game_msg_color( "black" );
+print_game_msg("Wave Strength = " + wave_strength );
+
+set_game_msg_color( "green" );
+
+print_game_msg("Gold (Wave Reward) = " + wave_counter*100 );
+
+
+for ( player = main_player ; player < horde ; ++ player ) {
+set_population_cap( player , ( 50 + wave_counter )) ;
+set_base_rate( player , "Food" , base_rate + ( 2 * wave_counter ) );
+set_base_rate( player , "Timber" , base_rate + ( 2 * wave_counter ) );
+set_base_rate( player , "Wealth" , base_rate + ( 2 * wave_counter ) );
+set_base_rate( player , "Metal" , base_rate + ( 2 * wave_counter ) );
+set_base_rate( player , "Oil" , base_rate + ( 2 * wave_counter ) );
+
+}
+
+side = rand_int ( 0 , 3 );
+
+switch ( side ) {
+case 0:
+x = rand_int ( 0, get_map_size() - 1);
+y = 0;
+break;
+case 1:
+x = get_map_size() - 1;
+y = rand_int ( 0, get_map_size() - 1);
+break;
+case 2:
+x = rand_int ( 0, get_map_size() - 1);
+y = get_map_size() - 1;
+break;
+case 3:
+x = 0;
+y = get_map_size() - 1;
+break;
+}
+	
+	
+	//bantu_pop = (int) wave_strength ;//should enforece a max (32 might be it) -- could instead of creating the wave in this triggers simply enable triggers in a for loop? to deplete wave strength.
+	
+//clear_group( horde );
+//have a static to refer to with a grouped pop? -- total pop.
+//create unit SHOULD clear current group, perhaps it isn't - even so create_unit_in_group could be useful.
+	
+
+//set_game_msg_color( "brown" );
+//print_game_msg( "# of enemies: " + bantu_pop );
+
+enable_trigger ("build_wave");
+}
+
+static int roll_broke_count = 0;
+static int pop_rem=31;//population remaining, room left in the cart.
+
+trigger build_wave(){
+
+clear_group(horde );
+create_unit( horde , x, y, "Umpakati", 1 );
+lower_bound=0;
+while (wave_strength > 4 && pop_rem > 0 && roll_broke_count < 5 )
+{
+hordice = rand_int(0,21); //horde dice, rolling to see what unit to spawn then checking for affordability. -- 
+switch ( hordice )
+{
+case 0: // Umpukati
+if ( wave_strength > 4 )
+{
+create_unit( horde , x, y, "Umpakati", 1 );
+--pop_rem;
+wave_strength-=5; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 1: // Impi
+if ( wave_strength > 7 )
+{
+create_unit( horde , x, y, "Impi", 1 );
+--pop_rem;
+wave_strength-=8; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 2: // War Elephant
+if ( wave_strength > 22 )
+{
+create_unit( horde , x, y, "War Elephant", 1 );
+--pop_rem;
+wave_strength-= 23 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 3: // Partisan
+if ( wave_strength > 13 )
+{
+create_unit( horde , x, y, "Partisan", 1 );
+--pop_rem;
+wave_strength-=14; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 4: // Basilica Cannon
+if ( wave_strength > 60 )
+{
+create_unit( horde , x, y, "Basilica Cannon", 1 );
+--pop_rem;
+wave_strength-= 61 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 5: // Katyusha Rocket
+if ( wave_strength > 168 )
+{
+create_unit( horde , x, y, "Katyusha Rocket", 1 );
+--pop_rem;
+wave_strength-= 169 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 6: // Yangombi Umpakati
+if ( wave_strength > 5 )
+{
+create_unit( horde , x, y, "Yangombi Umpakati", 1 );
+--pop_rem;
+wave_strength-= 6 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 7: // Light Camel
+if ( wave_strength > 5 )
+{
+create_unit( horde , x, y, "Light Camel", 1 );
+--pop_rem;
+wave_strength-= 6 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 8: // Camel Archer
+if ( wave_strength > 6 )
+{
+create_unit( horde , x, y, "Camel Archer", 1 );
+--pop_rem;
+wave_strength-= 7 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 9: // Royal Janissaries
+if ( wave_strength > 11 )
+{
+create_unit( horde , x, y, "Royal Janissaries", 1 );
+--pop_rem;
+wave_strength-= 12 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 10: // Royal Mameluke
+if ( wave_strength > 16 )
+{
+create_unit( horde , x, y, "Royal Mameluke", 1 );
+--pop_rem;
+wave_strength-= 17 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 11: // Armed Caravan
+if ( wave_strength > 15 )
+{
+create_unit( horde , x, y, "Armed Caravan", 1 );
+--pop_rem;
+wave_strength-= 16 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 12: // Armed Merchant
+if ( wave_strength > 15 )
+{
+create_unit( horde , x, y, "Armed Merchant", 1 );
+--pop_rem;
+wave_strength-= 16 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 13: // Mahout
+if ( wave_strength > 33 )
+{
+create_unit( horde , x, y, "Mahout", 1 );
+--pop_rem;
+wave_strength-= 34 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 14: // Flamethrower
+if ( wave_strength > 24 )
+{
+create_unit( horde , x, y, "Flamethrower", 1 );
+--pop_rem;
+wave_strength-= 25 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 15: // Armed Supply Wagon
+if ( wave_strength > 32 )
+{
+create_unit( horde , x, y, "Armed Supply Wagon", 1 );
+--pop_rem;
+wave_strength-= 33 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 16: // Gun Mahout
+if ( wave_strength > 50 )
+{
+create_unit( horde , x, y, "Gun Mahout", 1 );
+--pop_rem;
+wave_strength-= 51 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 17: // Red Guards Infantry --
+if ( wave_strength > 66 )
+{
+create_unit( horde , x, y, "Red Guards Infantry", 1 );
+--pop_rem;
+wave_strength-= 67 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 18: // Shock Infantry
+if ( wave_strength > 71 )
+{
+create_unit( horde , x, y, "Shock Infantry", 1 );
+--pop_rem;
+wave_strength-= 72 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 19: // Jaguar Assault Infantry
+if ( wave_strength > 79 )
+{
+create_unit( horde , x, y, "Jaguar Assault Infantry", 1 );
+--pop_rem;
+wave_strength-= 80 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 20: // Culverin Mahout
+if ( wave_strength > 61 )
+{
+create_unit( horde , x, y, "Culverin Mahout", 1 );
+--pop_rem;
+wave_strength-= 62 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+case 21: // Repeating Rifle Horse
+if ( wave_strength > 29 )
+{
+create_unit( horde , x, y, "Repeating Rifle Horse", 1 );
+--pop_rem;
+wave_strength-= 30 ; 
+}
+else { ++roll_broke_count; }
+break;
+
+
+
+
+//END OF DICE ROLLING SWITCH
+
+}
+
+}
+
+roll_broke_count = 0;
+pop_rem = 31;
+group_attack_to_order( horde , player_start_x , player_start_y );	
+enable_trigger ("next_wave");
+
+}
+	
+//End of Scenario
+}
